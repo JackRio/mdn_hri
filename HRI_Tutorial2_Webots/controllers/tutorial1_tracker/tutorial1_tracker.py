@@ -459,10 +459,12 @@ class MyRobot(Robot):
         target_mean = np.load("target_mean.npy") 
         target_std = np.load("target_std.npy")
         input_data= np.empty((1,2))
-        for idx,sample in enumerate(x):
-          input_data[idx,0] = (sample-x_mean[0])/x_std[0]
-        for idx,sample in enumerate(y):
-          input_data[idx,1] = (sample-x_mean[0])/x_std[0]
+        input_data[0,0] = (x-x_mean[0])/x_std[0]
+        input_data[0,1] = (y-x_mean[1])/x_std[1]
+        #for idx,sample in enumerate(x):
+        #  input_data[idx,0] = (sample-x_mean[0])/x_std[0]
+        #for idx,sample in enumerate(y):
+        #  input_data[idx,1] = (sample-x_mean[0])/x_std[0]
         # calculate arm movemnt 
         pi_variable, sigma_variable, mu_variable = model.forward(input_data)
         y_pred = sample_pred(pi_variable, sigma_variable, mu_variable)

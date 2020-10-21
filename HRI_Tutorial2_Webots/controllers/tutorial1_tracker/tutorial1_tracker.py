@@ -475,39 +475,8 @@ class MyRobot(Robot):
                     break
             return
              
-             
-             
-    def predict_movement(self,x,y):
-        # load model 
-        #model.load_state_dict(torch.load('mdn_model'))
-        model = torch.load('model.pth')
-        model.eval()
-        print(model)
-        #model
-        #... normalize input 
-        x_mean = np.load("input_mean.npy") 
-        x_std = np.load("input_std.npy")
-        target_mean = np.load("target_mean.npy") 
-        target_std = np.load("target_std.npy")
-        
-        input_data = torch.from_numpy(np.empty((1,2)))
-        input_data[0,0] = (x-x_mean[0])/x_std[0]
-        input_data[0,1] = (y-x_mean[1])/x_std[1]
-        #for idx,sample in enumerate(x):
-        #  input_data[idx,0] = (sample-x_mean[0])/x_std[0]
-        #for idx,sample in enumerate(y):
-        #  input_data[idx,1] = (sample-x_mean[0])/x_std[0]
-        # calculate arm movemnt 
-        pi_variable, sigma_variable, mu_variable = model.forward(input_data)
-        y_pred = sample_pred(pi_variable, sigma_variable, mu_variable)
-        # de-normalize 
-        prediction = (y_pred*target_std)+target_mean
-        print(prediction)
-        return prediction[0], prediction[1]
-        
-        
    
-    def sample_pred(pi, sigma, mu):
+    def sample_pred(self, pi, sigma, mu):
         N, K = pi.shape # Number of samples and number of Gaussians (Same Pi is assumend to work for all Noutputs)
         _, KT = mu.shape # Noutput x Number of Gaussians
         NO = int(KT / K) # Noutput
@@ -524,16 +493,52 @@ class MyRobot(Robot):
             for t in range(NO):
                 val = np.random.normal(mu[i,t + segment*NO], sigma[i,segment].item())
                 pred[i,t] = val
-        return pred
+        return pred             
+             
+    def predict_movement(self,x,y):
+        # load model 
+
+        model = torch.load('model.pth')
+        model.eval()
+        print(model)
+        #model
+        #... normalize input 
+        x_mean = np.load("input_mean.npy") 
+        x_std = np.load("input_std.npy")
+        target_mean = np.load("target_mean.npy") 
+        target_std = np.load("target_std.npy")
+        
+        input_data= np.empty((1,2))
+       
+        input_data[0,0] = (x-x_mean[0])/x_std[0]
+        input_data[0,1] = (y-x_mean[1])/x_std[1]
+        
+        input_data = torch.from_numpy((np.float32(input_data)))
+        
+        # calculate arm movemnt 
+        pi_variable, sigma_variable, mu_variable = model.forward(input_data)
+        #print(pi_variable, sigma_variable, mu_variable )
+        
+        y_pred = self.sample_pred(pi_variable.data.numpy(), sigma_variable.data.numpy(), mu_variable.data.numpy())
+        # de-normalize 
+        prediction = (y_pred*target_std)+target_mean
+        prediction = prediction.data.numpy()
+        print(prediction)
+        return prediction[0,0], prediction[0,1]
+        
+        
+
 
            
     def follow_ball(self):
-    
+        self.head_yaw.setVelocity(5)
+        self.head_pitch.setPosition(0)
+        self.head_yaw.setPosition(0.4)
         while self.step(self.timeStep) != -1:
 
              self.LElbow.setPosition(0)
-             self.LShoulderR.setVelocity(1)
-             self.LShoulder.setVelocity(1) 
+             self.LShoulderR.setVelocity(0.3)
+             self.LShoulder.setVelocity(0.3) 
              x_ball, y_ball = self.detect_ball()
              if x_ball != None:
                  print(x_ball)

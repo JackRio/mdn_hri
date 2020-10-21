@@ -6,10 +6,37 @@ from controller import Robot, Keyboard, Display, Motion
 import numpy as np
 import cv2
 import torch
-from torch import nn
+import torch.nn as nn
 from torch.autograd import Variable # storing data while learning
 from torch.distributions.distribution import Distribution
 
+"""class MDN(nn.Module):
+    def __init__(self, n_input, n_hidden, n_output, n_gaussians):
+        super(MDN, self).__init__()
+        
+        self.hidden = nn.Sequential(
+            nn.Linear(n_input, n_hidden),
+            nn.Tanh()
+        )
+        
+        self.pi = nn.Sequential(
+            nn.Linear(n_hidden, n_gaussians),
+            nn.Softmax(dim=1)
+        )
+        
+        self.sigma = nn.Linear(n_hidden, n_gaussians)
+        self.mu = nn.Linear(n_hidden, n_output*n_gaussians)
+        
+    def forward(self, x):
+        hidden = self.hidden(x)
+        pi = self.pi(hidden)
+        mu = self.mu(hidden)
+        sigma = torch.exp(self.sigma(hidden))
+        
+        return pi, sigma, mu
+     
+model = MDN(2,20,2,5)"""      
+    
 
 class MyRobot(Robot):
     def __init__(self, ext_camera_flag):
@@ -452,12 +479,16 @@ class MyRobot(Robot):
              
     def predict_movement(self,x,y):
         # load model 
-        model = torch.load('mdn_model')
+        #model.load_state_dict(torch.load('mdn_model'))
+        model = torch.load('model.pth')
+        model.eval()
+        #model
         #... normalize input 
         x_mean = np.load("input_mean.npy") 
         x_std = np.load("input_std.npy")
         target_mean = np.load("target_mean.npy") 
         target_std = np.load("target_std.npy")
+        
         input_data= np.empty((1,2))
         input_data[0,0] = (x-x_mean[0])/x_std[0]
         input_data[0,1] = (y-x_mean[1])/x_std[1]
@@ -470,6 +501,7 @@ class MyRobot(Robot):
         y_pred = sample_pred(pi_variable, sigma_variable, mu_variable)
         # de-normalize 
         prediction = (y_pred*target_std)+target_mean
+        print(prediction)
         return prediction[0], prediction[1]
         
         

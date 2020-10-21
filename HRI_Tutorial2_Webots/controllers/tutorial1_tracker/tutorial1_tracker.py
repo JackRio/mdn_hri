@@ -458,7 +458,7 @@ class MyRobot(Robot):
         x_std = np.load("input_std.npy")
         target_mean = np.load("target_mean.npy") 
         target_std = np.load("target_std.npy")
-        input_data= np.empty((x.shape[0],2))
+        input_data= np.empty((1,2))
         for idx,sample in enumerate(x):
           input_data[idx,0] = (sample-x_mean[0])/x_std[0]
         for idx,sample in enumerate(y):

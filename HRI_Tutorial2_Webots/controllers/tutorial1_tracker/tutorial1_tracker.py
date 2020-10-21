@@ -10,7 +10,7 @@ import torch.nn as nn
 from torch.autograd import Variable # storing data while learning
 from torch.distributions.distribution import Distribution
 
-"""class MDN(nn.Module):
+class MDN(nn.Module):
     def __init__(self, n_input, n_hidden, n_output, n_gaussians):
         super(MDN, self).__init__()
         
@@ -35,7 +35,7 @@ from torch.distributions.distribution import Distribution
         
         return pi, sigma, mu
      
-model = MDN(2,20,2,5)"""      
+model = MDN(2,20,2,5)     
     
 
 class MyRobot(Robot):
@@ -482,6 +482,7 @@ class MyRobot(Robot):
         #model.load_state_dict(torch.load('mdn_model'))
         model = torch.load('model.pth')
         model.eval()
+        print(model)
         #model
         #... normalize input 
         x_mean = np.load("input_mean.npy") 
@@ -489,7 +490,7 @@ class MyRobot(Robot):
         target_mean = np.load("target_mean.npy") 
         target_std = np.load("target_std.npy")
         
-        input_data= np.empty((1,2))
+        input_data = torch.from_numpy(np.empty((1,2)))
         input_data[0,0] = (x-x_mean[0])/x_std[0]
         input_data[0,1] = (y-x_mean[1])/x_std[1]
         #for idx,sample in enumerate(x):

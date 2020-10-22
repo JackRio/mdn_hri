@@ -12,6 +12,12 @@ ffn_model = torch.load('model/FFN.model')
 
 class MyRobot(Robot):
     def __init__(self, ext_camera_flag):
+        """
+        Initialization class for the Nao Robot.
+
+        :param ext_camera_flag: Indicator for using external camera or not
+        :type ext_camera_flag: bool
+        """
         super(MyRobot, self).__init__()
         print('> Starting robot controller')
 
@@ -68,10 +74,15 @@ class MyRobot(Robot):
         self.RElbow.setPosition(float(1.4))
         self.RElbow.setVelocity(1)
 
-
     # Captures the external camera frames
     # Returns the image downsampled by 2
     def camera_read_external(self):
+        """
+        Captures the picture through external camera
+
+        :return: returns the captured image
+        :rtype: nd.array
+        """
         img = []
         if self.ext_camera:
             # Capture frame-by-frame
@@ -83,6 +94,11 @@ class MyRobot(Robot):
         return img
 
     def detect_ball(self):
+        """
+        Looks for the ball in the environment and if it detects the ball returns the co-ordinates of the ball
+        :return: Co-ordinates of the ball or None value
+        :rtype: int, int
+        """
 
         img = self.cameraBottom.getImage()
         height, width = self.cameraBottom.getHeight(), self.cameraBottom.getWidth()
@@ -116,8 +132,12 @@ class MyRobot(Robot):
                 return None, None
         return None, None
 
-
     def gather_data(self):
+        """
+        Module to collect data for training the MDN network
+            This method collects the co ordinate of the ball and the pitch and roll values.
+            The data will be later used to train the MDN and FFN network
+        """
 
         while True:
             records = []
@@ -163,13 +183,24 @@ class MyRobot(Robot):
                     print(records)
                     records = np.asarray(records)
                     print(records)
-                    np.save("data.npy", records)
+                    np.save("data/data.npy", records)
                 if self.step(self.timeStep) == -1:
                     break
             return
 
     @staticmethod
     def sample_pred(pi, sigma, mu):
+        """
+            Predicts the pitch and roll position for the given co-ordinates take pi, mu and sigma as input
+        :param pi: Normalized vector for N mixing coefficients
+        :type pi: nd.array
+        :param sigma: Variance as a function of x
+        :type sigma: nd.array
+        :param mu: Mean as a function of x
+        :type mu: nd.array
+        :return: Prediction array
+        :rtype:nd.array
+        """
         N, K = pi.shape  # Number of samples and number of Gaussians (Same Pi is assumend to work for all Noutputs)
         _, KT = mu.shape  # Noutput x Number of Gaussians
         NO = int(KT / K)  # Noutput
@@ -189,6 +220,18 @@ class MyRobot(Robot):
         return pred
 
     def predict_movement(self, x, y, model_key):
+        """
+            Main module which takes ball co-ordinates and outputs the roll and pitch location for the robot
+            arm. The method uses either FFN or MDN model to predict the values based on the model_key value.
+        :param x: Input array of co-ordinates
+        :type x: nd.array
+        :param y: Output array of position of arm
+        :type y: nd.array
+        :param model_key: True for MDN and False for FFN
+        :type model_key: bool
+        :return: Position of roll and pitch
+        :rtype: float, float
+        """
         # load model 
         model = torch.load('model/MDN.model')
         model.eval()
@@ -225,6 +268,11 @@ class MyRobot(Robot):
             return prediction[0, 0], prediction[0, 1]
 
     def follow_ball(self, model_key=True):
+        """
+            Uses the prediction of the network to move the arm of the Robot to follow the movement of the bot.
+        :param model_key: True for MDN and False for FFN (Default is True)
+        :type model_key: bool
+        """
 
         # instantiate starting position
         self.head_yaw.setVelocity(1)
@@ -257,5 +305,6 @@ class MyRobot(Robot):
                         self.LShoulder.setPosition(pitch_position)
 
 
+# Initializing Robot class variable
 robot = MyRobot(ext_camera_flag=False)
-robot.follow_ball(False)
+robot.follow_ball(True)

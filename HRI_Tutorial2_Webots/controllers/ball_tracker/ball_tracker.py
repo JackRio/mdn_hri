@@ -68,9 +68,6 @@ class MyRobot(Robot):
         self.RElbow.setPosition(float(1.4))
         self.RElbow.setVelocity(1)
 
-        self.ChestLED = self.getLED('ChestBoard/Led')
-        self.LEarLED = self.getLED('Ears/Led/Left')
-        self.REarLED = self.getLED('Ears/Led/Right')
 
     # Captures the external camera frames
     # Returns the image downsampled by 2
@@ -119,22 +116,6 @@ class MyRobot(Robot):
                 return None, None
         return None, None
 
-    def deactivate(self):
-        # stop movemnet, trun of LEDS, move arms in relaxed position
-        self.ChestLED.set(int('000000', 16))
-        self.LEarLED.set(int('000000', 16))
-        self.REarLED.set(int('000000', 16))
-        # wait, to simulate human like processing
-        self.step(self.timeStep * 50)
-        # Move arms backwards in order to act taken aback
-        self.LShoulder.setPosition(float(1.8))
-        self.RShoulder.setPosition(float(1.8))
-        self.LShoulderR.setPosition(float(0.3))
-        self.RShoulderR.setPosition(float(-0.3))
-        self.LElbow.setPosition(float(-1.4))
-        self.RElbow.setPosition(float(1.4))
-        self.head_yaw.setPosition(float(0))
-        self.head_pitch.setPosition(float(0))
 
     def gather_data(self):
 
@@ -182,7 +163,7 @@ class MyRobot(Robot):
                     print(records)
                     records = np.asarray(records)
                     print(records)
-                    np.save("/Users/frederikesmac/Desktop/HRI/data.np", records)
+                    np.save("data.npy", records)
                 if self.step(self.timeStep) == -1:
                     break
             return
